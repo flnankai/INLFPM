@@ -20,18 +20,18 @@ def csv_text(path):
     return path.read_text(encoding="utf-8-sig")
 
 
-def monthly_ff3(path, months):
+def monthly_factors(path, months, fields):
     # French distributes monthly and annual observations together. Only
     # six-digit dates belong to the monthly table.
     reader = csv.reader(io.StringIO(csv_text(path)))
-    fields = ["Mkt-RF", "SMB", "HML", "RF"]
     header = None
     rows = {}
     for raw in reader:
         row = [s.strip() for s in raw]
         if header is None:
-            if all(k in row for k in fields):
-                header = [row.index(k) for k in fields]
+            names = [k.lower() for k in row]
+            if all(k.lower() in names for k in fields):
+                header = [names.index(k.lower()) for k in fields]
             continue
         if not row:
             continue
@@ -42,7 +42,7 @@ def monthly_ff3(path, months):
             raise ValueError(f"Duplicate monthly factor row: {key}")
         rows[key] = [float(row[i]) for i in header]
     if header is None:
-        raise ValueError("Expected columns Mkt-RF, SMB, HML and RF.")
+        raise ValueError(f"Expected factor columns {fields} in {path.name}.")
     missing = [str(m) for m in months if m.strftime("%Y%m") not in rows]
     if missing:
         raise ValueError(f"Factors missing for {', '.join(missing)}.")
@@ -93,7 +93,7 @@ def read_updated_panel(prices, factors, first, last, calendar=None):
     px = data.iloc[:, 1:].set_axis(dates).loc[ends].to_numpy(dtype=float)
     if not np.isfinite(px).all() or (px <= 0).any():
         raise ValueError("The fixed panel must have positive finite prices at every month end.")
-    fac = monthly_ff3(factors, months)
+    fac = monthly_factors(factors, months, ["Mkt-RF", "SMB", "HML", "RF"])
     y = px[1:] / px[:-1] - 1 - fac[:, 3, None]
     return np.ascontiguousarray(y), np.ascontiguousarray(fac[:, :3]), fac[:, 3], months
 

@@ -91,24 +91,28 @@ def initialize(y, f):
 def window(task):
     length, start = task
     end = start + length
-    return length, panel_pvalues(RETURNS[start:end], FACTORS[start:end], start)
+    return length, start, panel_pvalues(RETURNS[start:end], FACTORS[start:end], start)
 
 
-def summarize(y, f, workers, include_last_window=False, full_sample=True):
+def window_values(y, f, workers, include_last_window=False, full_sample=True):
     windows = (48, 60, 72)
     n = len(y)
     if n <= max(windows):
         raise ValueError("The rolling design requires more than 72 return months.")
     tasks = [(length, start) for length in windows
              for start in range(n - length + int(include_last_window))]
-    values = {length: [] for length in windows}
+    values = {length: [None] * (n - length + int(include_last_window)) for length in windows}
     with Pool(workers, initializer=initialize, initargs=(y, f)) as pool:
-        for length, p in pool.imap_unordered(window, tasks, chunksize=1):
-            values[length].append(p)
+        for length, start, p in pool.imap_unordered(window, tasks, chunksize=1):
+            values[length][start] = p
     # The full-sample fit uses larger pairwise covariance arrays. Compute it
     # after releasing worker memory.
     if full_sample:
         values[n] = [panel_pvalues(y, f, 0)]
+    return values
+
+
+def summary_records(values, n, assets):
     for length, panel in values.items():
         p = np.asarray(panel)
         valid = np.isfinite(p).sum(axis=0)
@@ -116,10 +120,15 @@ def summarize(y, f, workers, include_last_window=False, full_sample=True):
             counts = np.sum(p < level, axis=0)
             for j, method in enumerate(METHODS):
                 yield {"sample": "full" if length == n else "rolling",
-                       "assets": y.shape[1], "months": length, "level": level,
+                       "assets": assets, "months": length, "level": level,
                        "method": method, "attempted": len(panel), "valid": valid[j],
                        "rejections": counts[j], "rate": counts[j] / len(panel),
                        "full_pvalue": p[0, j] if length == n else ""}
+
+
+def summarize(y, f, workers, include_last_window=False, full_sample=True):
+    values = window_values(y, f, workers, include_last_window, full_sample)
+    yield from summary_records(values, len(y), y.shape[1])
 
 
 def main():

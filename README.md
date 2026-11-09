@@ -94,6 +94,22 @@ updated <- read.csv(system.file("extdata", "empirical-updated-summary.csv", pack
 subset(updated, sample == "rolling" & level == 0.05 & market_spec == "standard_FF3")
 ```
 
+## Five pricing models on matched windows
+
+The model comparison keeps the same 272 stocks, 260 return months, 603 rolling windows, risk-free series and bootstrap draws. CAPM uses Mkt-RF. FF3 adds SMB and HML from the three-factor file. Carhart4 adds the monthly momentum factor (Mom, also called UMD) to FF3. FF5 uses Mkt-RF, SMB, HML, RMW and CMA from the five-factor file, including that file's five-factor SMB definition. FF5+UMD adds Mom to FF5. All factors use the September 2026 U.S. data release. [Kenneth French Data Library](https://mba.tuck.dartmouth.edu/pages/faculty/ken.french/data_library.html)
+
+```sh
+python inst/reproduce/empirical_models.py --prices panel/monthly_adjusted_prices.csv --ff3 F-F_Research_Data_Factors_CSV.zip --ff5 F-F_Research_Data_5_Factors_2x3_CSV.zip --momentum F-F_Momentum_Factor_CSV.zip --calendar F-F_Research_Data_Factors_daily_CSV.zip --workers 25 --summary factor-model-summary.csv --overlap factor-model-IN-overlap.csv
+```
+
+The model summary provides valid fits, attempted windows and rejection counts at each nominal level, plus full-sample p-values. The overlap table uses the common valid windows of IN-SUM, IN-MAX and IN-CC. Its `max_only` and `sum_only` columns count component disagreements. The `cc_keeps_max_only` and `cc_keeps_sum_only` columns count the disagreements for which IN-CC rejects. Each available `first_max_only` example reports the earliest start, end and three p-values. Nested rolling windows overlap in calendar time.
+
+```r
+models <- read.csv(system.file("extdata", "factor-model-summary.csv", package = "INLFPM"))
+overlap <- read.csv(system.file("extdata", "factor-model-IN-overlap.csv", package = "INLFPM"))
+subset(overlap, months == 60 & level == 0.05)
+```
+
 ## License
 
 GPL-3.

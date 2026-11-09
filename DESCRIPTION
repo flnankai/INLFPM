@@ -1,7 +1,7 @@
 Package: INLFPM
 Type: Package
 Title: Max, Sum and Cauchy Tests for High-Dimensional Factor Models
-Version: 0.2.0
+Version: 0.3.0
 Authors@R: person("Long", "Feng", email = "flnankai@nankai.edu.cn",
     role = c("aut", "cre"))
 Description: Tests the joint null of zero intercepts in a panel of returns
