@@ -94,19 +94,21 @@ def window(task):
     return length, panel_pvalues(RETURNS[start:end], FACTORS[start:end], start)
 
 
-def summarize(y, f, workers):
+def summarize(y, f, workers, include_last_window=False, full_sample=True):
     windows = (48, 60, 72)
     n = len(y)
     if n <= max(windows):
         raise ValueError("The rolling design requires more than 72 return months.")
-    tasks = [(length, start) for length in windows for start in range(n - length)]
-    values = {length: [] for length in (*windows, n)}
+    tasks = [(length, start) for length in windows
+             for start in range(n - length + int(include_last_window))]
+    values = {length: [] for length in windows}
     with Pool(workers, initializer=initialize, initargs=(y, f)) as pool:
         for length, p in pool.imap_unordered(window, tasks, chunksize=1):
             values[length].append(p)
     # The full-sample fit uses larger pairwise covariance arrays. Compute it
     # after releasing worker memory.
-    values[n] = [panel_pvalues(y, f, 0)]
+    if full_sample:
+        values[n] = [panel_pvalues(y, f, 0)]
     for length, panel in values.items():
         p = np.asarray(panel)
         valid = np.isfinite(p).sum(axis=0)

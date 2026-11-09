@@ -69,6 +69,31 @@ application <- read.csv(system.file("extdata", "empirical-summary.csv", package 
 subset(application, sample == "rolling" & level == 0.05)
 ```
 
+## Updated monthly stock application
+
+The extended application starts with 375 identifiers in the earlier Wind panel. Of these, 275 ticker symbols match the September 30, 2026 S&P 500 roster. Three matches (FOX, FOXA and IR) have documented changes of security identity. The remaining 272 have positive month-end adjusted closes throughout and a Spearman correlation of at least 0.80 between the Wind and Yahoo monthly returns during the overlap. This fixed panel uses information from both endpoints. Membership can change between those endpoints.
+
+The 503 distinct symbols in `inst/extdata/constituents_20260930.csv` come from the September 30, 2026 observation in Chinobing's historical S&P 500 constituent archive. [Frozen constituent history](https://github.com/chinobing/historical_sp500_constituents/blob/edf70ac0cb1237ef2cc585dcbb79f294a8fb282a/sp_500_historical_components.csv)
+
+Given the local Wind file and a single-column endpoint roster headed `ticker`, the price-preparation command requests Yahoo daily adjusted closes, obtains month ends from SPY sessions and writes a security audit and the month-end matrix. It uses Python with NumPy, pandas and requests. The data used for the published update have adjusted-price CSV SHA-256 `01c321e50f2b0e9dfd59cbe0fbade255f54e433abb18617eff612d397d0224e8`. Historical adjusted prices can change after vendor revisions.
+
+```sh
+python inst/reproduce/fetch_monthly_prices.py --archive SP500_2005_now_month.csv --roster inst/extdata/constituents_20260930.csv --out panel
+```
+
+Supply an adjusted-close CSV with one row per trading date or month end. The first column contains ISO dates and the remaining columns identify individual stocks. For each calendar month the script selects one common closing date for every stock. Supply the monthly Fama–French U.S. research factors as the official CSV or ZIP in percentage units. An optional calendar file accepts the French daily CSV/ZIP or a CSV with trading dates in its first column.
+
+```sh
+python inst/reproduce/empirical_updated.py --prices panel/monthly_adjusted_prices.csv --factors F-F_Research_Data_Factors_CSV.zip --calendar F-F_Research_Data_Factors_daily_CSV.zip --workers 25 --output empirical_updated_summary.csv
+```
+
+January 2005 supplies the starting adjusted price. The 260 simple monthly returns cover February 2005 through September 2026. For each stock, the script subtracts RF from the return. Under `standard_FF3` the regressors use Mkt-RF, SMB and HML as published, all in decimal units. Under `source_market_minus_RF` the market column is Mkt-RF minus RF, reproducing the earlier application's convention. The 48-, 60- and 72-month analyses include all 213, 201 and 189 available windows under both conventions with common bootstrap draws. Full-sample p-values use standard FF3.
+
+```r
+updated <- read.csv(system.file("extdata", "empirical-updated-summary.csv", package = "INLFPM"))
+subset(updated, sample == "rolling" & level == 0.05 & market_spec == "standard_FF3")
+```
+
 ## License
 
 GPL-3.
