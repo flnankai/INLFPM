@@ -1,0 +1,17 @@
+Package: INLFPM
+Type: Package
+Title: Max, Sum and Cauchy Tests for High-Dimensional Factor Models
+Version: 0.1.0
+Authors@R: person("Long", "Feng", email = "flnankai@nankai.edu.cn",
+    role = c("aut", "cre"))
+Description: Tests the joint null of zero intercepts in a panel of returns
+    with observed factors. Implements least-squares, spatial-sign and
+    inverse-norm weighted tests. The spatial-sign and inverse-norm maxima
+    use finite-sample analytic reference tails, which also enter their
+    Cauchy combinations. Includes a summary-only parallel simulation driver.
+License: GPL-3
+Encoding: UTF-8
+Depends: R (>= 4.1.0)
+Imports: stats, parallel, utils
+URL: https://github.com/flnankai/INLFPM
+BugReports: https://github.com/flnankai/INLFPM/issues

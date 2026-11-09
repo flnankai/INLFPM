@@ -1,0 +1,5 @@
+export(inmax_test)
+export(ac_in_analytic)
+export(ac_ss_analytic)
+export(inmax_run)
+importFrom(stats,dnorm,integrate,median,pnorm,pt,qnorm,quantile,rchisq,rnorm,rt,runif,sd,setNames,uniroot)

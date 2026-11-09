@@ -54,6 +54,21 @@ results <- inmax_run(replications = 1000L, workers = 25L,
 
 The final summary gives rejection rates per attempted panel, rejected and valid counts, failures, Monte Carlo standard errors and bounds for the effect of failed fits. An installed command-line entry point is available through `system.file("reproduce", "run.R", package = "INLFPM")`.
 
+## Monthly stock application
+
+The application uses 375 stocks with complete prices from January 2005 through October 2018. Supply local copies of the monthly stock-price and factor CSVs to the Python entry point. Prices are GBK-encoded, with two metadata columns followed by consecutive dates. The factor file has columns `month` (YYYYMM), `Mkt-RF`, `SMB`, `HML` and `RF`, in percentage points.
+
+```sh
+python inst/reproduce/empirical.py --prices SP500_2005_now_month.csv --factors F-F_Research_Data_Factors.CSV --workers 25 --output empirical_summary.csv
+```
+
+Simple stock returns and factor rows are paired by their ending month. The source application's market regressor is constructed as `(Mkt-RF column - RF column)/100`; the response subtracts `RF/100` from each simple return. SMB and HML enter in their source units. For 165 return months and window length T, the application uses the first 165 - T start positions, yielding 117, 105 and 93 windows of length 48, 60 and 72. Each window's 100 bootstrap draws use a NumPy SeedSequence with entropy `[20261109, T, zero_based_start]`. One additional row per method and level describes the full 165-month sample. The `full_pvalue` column records those full-sample p-values.
+
+```r
+application <- read.csv(system.file("extdata", "empirical-summary.csv", package = "INLFPM"))
+subset(application, sample == "rolling" & level == 0.05)
+```
+
 ## License
 
 GPL-3.
