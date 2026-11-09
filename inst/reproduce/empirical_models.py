@@ -79,6 +79,20 @@ def write_table(path, rows):
         writer.writerows(rows)
 
 
+def fit_models(y, models, months, workers):
+    """Apply all nine tests to identical full and rolling samples for every model."""
+    summaries, overlaps = [], []
+    for model, f in models.items():
+        print(f"Fitting {model} on {len(months)} months and {y.shape[1]} stocks", flush=True)
+        windows = window_values(y, np.ascontiguousarray(f), workers,
+                                include_last_window=True, full_sample=True)
+        for row in summary_records(windows, len(months), y.shape[1]):
+            row.update(factor_model=model, first_month=str(months[0]), last_month=str(months[-1]))
+            summaries.append(row)
+        overlaps.extend(in_overlap(windows, months, model))
+    return summaries, overlaps
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--prices", required=True, type=Path)
@@ -95,15 +109,7 @@ def main():
     y, three, rf, months = read_updated_panel(args.prices, args.ff3, "2005-02",
                                                "2026-09", args.calendar)
     models = designs(three, rf, months, args.ff5, args.momentum)
-    summaries, overlaps = [], []
-    for model, f in models.items():
-        print(f"Fitting {model} on {len(months)} months and {y.shape[1]} stocks", flush=True)
-        windows = window_values(y, np.ascontiguousarray(f), args.workers,
-                                include_last_window=True, full_sample=True)
-        for row in summary_records(windows, len(months), y.shape[1]):
-            row.update(factor_model=model, first_month=str(months[0]), last_month=str(months[-1]))
-            summaries.append(row)
-        overlaps.extend(in_overlap(windows, months, model))
+    summaries, overlaps = fit_models(y, models, months, args.workers)
     write_table(args.summary, summaries)
     write_table(args.overlap, overlaps)
     print(f"Completed {len(models)} models with {len(summaries)} rates and {len(overlaps)} paired comparisons.")

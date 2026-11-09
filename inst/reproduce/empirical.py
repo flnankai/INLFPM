@@ -83,32 +83,40 @@ def panel_pvalues(y, f, start):
     return p
 
 
-def initialize(y, f):
-    global RETURNS, FACTORS
-    RETURNS, FACTORS = y, f
+def complete_panel(y):
+    """Keep exactly the stocks observed in every row of this estimation window."""
+    return np.ascontiguousarray(y[:, np.isfinite(y).all(axis=0)])
+
+
+def initialize(y, f, windowwise_complete=False):
+    global RETURNS, FACTORS, WINDOWWISE_COMPLETE
+    RETURNS, FACTORS, WINDOWWISE_COMPLETE = y, f, windowwise_complete
 
 
 def window(task):
     length, start = task
     end = start + length
-    return length, start, panel_pvalues(RETURNS[start:end], FACTORS[start:end], start)
+    y = RETURNS[start:end]
+    if WINDOWWISE_COMPLETE:
+        y = complete_panel(y)
+    return length, start, panel_pvalues(y, FACTORS[start:end], start)
 
 
-def window_values(y, f, workers, include_last_window=False, full_sample=True):
-    windows = (48, 60, 72)
+def window_values(y, f, workers, include_last_window=False, full_sample=True,
+                  windowwise_complete=False, lengths=(48, 60, 72)):
     n = len(y)
-    if n <= max(windows):
-        raise ValueError("The rolling design requires more than 72 return months.")
-    tasks = [(length, start) for length in windows
+    if not lengths or len(set(lengths)) != len(lengths) or not all(0 < k < n for k in lengths):
+        raise ValueError("Window lengths must be distinct positive integers shorter than the panel.")
+    tasks = [(length, start) for length in lengths
              for start in range(n - length + int(include_last_window))]
-    values = {length: [None] * (n - length + int(include_last_window)) for length in windows}
-    with Pool(workers, initializer=initialize, initargs=(y, f)) as pool:
+    values = {length: [None] * (n - length + int(include_last_window)) for length in lengths}
+    with Pool(workers, initializer=initialize, initargs=(y, f, windowwise_complete)) as pool:
         for length, start, p in pool.imap_unordered(window, tasks, chunksize=1):
             values[length][start] = p
     # The full-sample fit uses larger pairwise covariance arrays. Compute it
     # after releasing worker memory.
     if full_sample:
-        values[n] = [panel_pvalues(y, f, 0)]
+        values[n] = [panel_pvalues(complete_panel(y) if windowwise_complete else y, f, 0)]
     return values
 
 

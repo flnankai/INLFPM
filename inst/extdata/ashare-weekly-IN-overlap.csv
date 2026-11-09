@@ -1,0 +1,9 @@
+factor_model,level,attempted,valid,sum_rejections,max_rejections,cc_rejections,sum_only,max_only,both_components,neither_component,cc_only,cc_adds_vs_sum,cc_loses_vs_sum,cc_adds_vs_max,cc_loses_vs_max,cc_keeps_sum_only,cc_keeps_max_only,first_max_only_start,first_max_only_end,first_max_only_sum_p,first_max_only_max_p,first_max_only_cc_p,first_cc_only_start,first_cc_only_end,first_cc_only_sum_p,first_cc_only_max_p,first_cc_only_cc_p,weeks,universe,assets
+FF3,0.01,215,215,27,0,25,27,0,0,188,0,0,2,25,0,25,0,,,,,,,,,,,52,CSI300,265
+FF3,0.05,215,215,33,6,29,27,0,6,182,0,0,4,23,0,23,0,,,,,,,,,,,52,CSI300,265
+FF5,0.01,215,215,16,0,15,16,0,0,199,0,0,1,15,0,15,0,,,,,,,,,,,52,CSI300,265
+FF5,0.05,215,215,30,0,19,30,0,0,185,0,0,11,19,0,19,0,,,,,,,,,,,52,CSI300,265
+FF3,0.01,215,215,7,0,4,7,0,0,208,0,0,3,4,0,4,0,,,,,,,,,,,52,CSI500,417
+FF3,0.05,215,215,12,0,10,12,0,0,203,0,0,2,10,0,10,0,,,,,,,,,,,52,CSI500,417
+FF5,0.01,215,215,4,0,2,4,0,0,211,0,0,2,2,0,2,0,,,,,,,,,,,52,CSI500,417
+FF5,0.05,215,215,10,2,10,10,2,0,203,0,1,1,9,1,9,1,2021-05-28 00:00:00,2022-05-27 00:00:00,0.05350801853886902,0.021871143237871295,0.031071646199689912,,,,,,52,CSI500,417

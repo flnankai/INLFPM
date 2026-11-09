@@ -110,6 +110,61 @@ overlap <- read.csv(system.file("extdata", "factor-model-IN-overlap.csv", packag
 subset(overlap, months == 60 & level == 0.05)
 ```
 
+## Monthly CSI 300 A-share application
+
+The fixed panel contains 103 stocks with uninterrupted histories from February 2007 through December 2025. The June 2026 Eastmoney snapshot lists 300 CSI 300 constituents. The archived return file covers 299 of them. Selecting complete histories from this later roster conditions the sample on both membership and data availability. Historical index membership changed over the sample.
+
+Of the 23,381 monthly returns in the fixed panel, 23,053 come from ratios of consecutive Tencent monthly closing prices with its `hfq` adjustment (后复权). The archive obtains the other 328 from consecutive prices in a local adjusted-price file and fills the missing returns by stock and month. Both prices in each ratio come from the same source. The two sources use their own adjustment conventions.
+
+The seven models use the same raw returns, 180 four-year windows, 168 five-year windows and 156 six-year windows. CAPM, FF3, Carhart4, FF5 and FF5+UMD use a common archive of Chinese factors constructed with CSMAR data. The market factor is the excess return on the float-cap-weighted A-share market. SMB, HML, UMD, RMW and CMA are the archive's value-weighted factor series. Each stock's return is reduced by the supplied monthly RF once. For CH3 and CH4, each model uses its own workbook's market, factor and RF series. CH3 uses size and earnings-to-price value. CH4 also uses abnormal turnover. [Liu, Stambaugh and Yuan (2019), *Size and Value in China*](https://en.mingshiim.com/static/sizevaluechina.pdf)
+
+To reproduce all seven specifications, install Python with NumPy, SciPy, pandas and openpyxl. Supply the two local archive files under the following paths relative to `--source-dir`. The stock-return panel and CSMAR-based archive must be supplied by the user.
+
+| Input | Data layout | SHA-256 |
+| --- | --- | --- |
+| `hs300_ff4_external_rf_hybrid_2007_2025_monthly_returns.csv` | `Date` (ISO month end), followed by 299 six-digit stock codes. Values are simple decimal monthly returns before RF. | `7a1a4ecd932800c16a18428a5503ef0b34d0fddb5228665d5d6f7ef2c1206864` |
+| `factor_data_20260607/three_four_five_factor_monthly/fivefactor_monthly.csv` | `trdmn` (YYYYMM), `mkt_rf`, `smb`, `hml`, `umd`, `rmw`, `cma`, `rf` in decimal monthly units. | `60ac677b3692dd29028ccee55ba9468c08b3be651d66dd8fd7de03568a6daeb1` |
+| `CH3_factors_monthly_202608.xlsx` | `Returnseries` sheet with `mnthdt` (YYYYMMDD), `rf_mon`, `mktrf`, `SMB`, `VMG`. | `8d956043a1a39d10bc1b777a865fca8cf40b1b628c1d94f900ba2b23c22819a4` |
+| `CH4_factors_monthly_202608.xlsx` | The CH4 `Returnseries` sheet also contains `PMO`. | `9ebb2d93fb8730f100251a2fe511ea4749c332d33183662eee75558f0b632555` |
+
+The two monthly workbooks are available from the authors' data library. The article uses the August 2026 release, restricted to the stock sample dates. [Mingshi monthly CH3 and CH4 downloads](https://en.mingshiim.com/wq/)
+
+```sh
+python inst/reproduce/empirical_ashares.py --source-dir path/to/local/archive --ch3 CH3_factors_monthly_202608.xlsx --ch4 CH4_factors_monthly_202608.xlsx --workers 25 --summary inst/extdata/ashare-summary.csv --overlap inst/extdata/ashare-IN-overlap.csv
+```
+
+Omit both workbook flags to run the five specifications supplied by the local archive. The summary includes full-sample p-values and all nine tests' rolling rejection counts. The overlap table records counts for the paired IN-SUM, IN-MAX and IN-CC decisions. All windows include both endpoints and move one month at a time.
+
+```r
+cn <- read.csv(system.file("extdata", "ashare-summary.csv", package = "INLFPM"))
+cn_pairs <- read.csv(system.file("extdata", "ashare-IN-overlap.csv", package = "INLFPM"))
+subset(cn_pairs, months == 60 & level == 0.05)
+```
+
+For the CH3 and CH4 coverage check, start from all 299 series and retain each stock with returns in every month of the current window. The resulting panels contain 104–280 stocks over four-year windows, 104–270 over five-year windows and 104–256 over six-year windows. Within a given window, both models and all nine tests use the same stocks. The full-sample check uses the original 103 complete histories.
+
+```sh
+python inst/reproduce/empirical_ashare_windows.py --source-dir path/to/local/archive --ch3 CH3_factors_monthly_202608.xlsx --ch4 CH4_factors_monthly_202608.xlsx --workers 25 --summary inst/extdata/ashare-window-summary.csv --overlap inst/extdata/ashare-window-IN-overlap.csv
+```
+
+## Weekly CSI 300 and CSI 500 comparison
+
+Two archived constituent workbooks each report 270 trading weeks of percentage changes, from January 3, 2020 through April 11, 2025. The stock lists are disjoint and fixed at the rosters in the respective exports. Each workbook's `Sheet1` has a first column headed `Date` containing exchange-qualified stock codes, with week-ending trading dates across the remaining columns. Divide each percentage change by 100. The third file supplies decimal weekly returns for `mkt_rf`, `smb`, `hml`, `rmw`, `cma` and `rf`, indexed by `trdwk`. The source places each week's factors on Friday. Stock dates can end earlier in holiday weeks. The reader requires a one-to-one match of all trading weeks in chronological order.
+
+The constituent exports contain zeros before some stocks first trade. The first four observations establish eligibility. A stock must have at least one recorded nonzero return during this January 2020 run-in, finite returns on every subsequent date and some variation in every 52-week analysis window. One CSI 300 security, 000792.SZ, had a 66-week stretch of zero returns during a listing suspension. Shorter zero runs remain in the analysis as reported. The resulting fixed panels contain 265 CSI 300 and 417 CSI 500 stocks. Each has 266 weekly observations from February 7, 2020, giving 215 overlapping 52-trading-week windows. [Shenzhen Stock Exchange filing on 000792.SZ](https://disc.static.szse.cn/disc/disk02/finalpage/2021-08-03/226f764b-539a-4c13-80b8-a2453ccf49ff.PDF)
+
+Each index is tested with the three-factor and five-factor specifications. The response subtracts weekly RF from each stock once. Supply the archived stock workbooks and CSMAR-based weekly factor file with the following SHA-256 fingerprints.
+
+| Filename | SHA-256 |
+| --- | --- |
+| `沪深300成分股近五年周数据PctChange.xlsx` | `0a5192f1b8bb1161a843402e2763c4f8807270c1319e5651c22948a4d00af9c4` |
+| `中证500成分股近五年周数据PctChange.xlsx` | `15807d1c981883d97e25a2de26860d868397e2cd1af390c6d5b3124d788b2f4f` |
+| `fivefactor_weekly.csv` | `cc6262cc4ed31d5aa7b09111703037777efdcd2590b7fb8cb4c5c436d3f470c7` |
+
+```sh
+python inst/reproduce/empirical_ashare_weekly.py --csi300 "沪深300成分股近五年周数据PctChange.xlsx" --csi500 "中证500成分股近五年周数据PctChange.xlsx" --factors fivefactor_weekly.csv --workers 25 --summary inst/extdata/ashare-weekly-summary.csv --overlap inst/extdata/ashare-weekly-IN-overlap.csv
+```
+
 ## License
 
 GPL-3.
