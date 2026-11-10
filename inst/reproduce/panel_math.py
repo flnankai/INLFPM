@@ -343,7 +343,8 @@ def draw_factors(T,rng):
 def draw_data(T,N,distribution,rng):
     f=draw_factors(T,rng)
     if distribution=="IC-t3":
-        eps=rng.standard_t(3,size=(T,N))@symmetric_sqrt(N).T
+        components = rng.standard_t(3, size=(T, N)) / np.sqrt(3.0)
+        eps = components @ symmetric_sqrt(N).T
     else:
         z=rng.standard_normal((T,N));innov=z*np.sqrt(.75);innov[:,0]=z[:,0]
         eps=lfilter([1.],[1.,-.5],innov,axis=1)

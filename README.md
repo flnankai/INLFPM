@@ -34,13 +34,15 @@ paper <- read.csv(system.file("extdata", "paper-summary.csv", package = "INLFPM"
 subset(paper, design == "null" & T == 60 & N == 200)
 ```
 
-To regenerate the manuscript counts, run the Python script below from the repository root. It generates the original NumPy panels, computes the five unchanged p-values using the original bootstrap seed and corrected leave-two-out IN-SUM kernel, then evaluates both calibrated maxima and their combinations on each panel. It runs 1,000 replications per cell with 25 processes by default. The package contains the required numerical routines. The computation writes a single summary CSV.
+To regenerate the manuscript counts, run the Python script below from the repository root. It uses the manuscript's NumPy random streams and bootstrap seeds to compute all nine tests, including the leave-two-out IN-SUM statistic and both calibrated maxima. It runs 1,000 replications per cell with 25 processes by default and writes a single summary CSV.
 
 ```sh
 python inst/reproduce/manuscript.py --run --workers 25 --output calibrated_summary.csv
 ```
 
-Python 3.14.4, NumPy 2.4.4 and SciPy 1.17.1 were used for the calibrated results. If the original `INMAX_Research_Package_20261108.zip` is available locally, add `--archive path/to/INMAX_Research_Package_20261108.zip` to reuse the five unchanged p-values stored for each panel. This mode also uses pandas 3.0.2, regenerates the original data, verifies panel seeds and fitted maxima, and recomputes the four changed procedures. Both modes use a strict five-percent rejection threshold.
+Python 3.14.4, NumPy 2.4.4 and SciPy 1.17.1 were used for the calibrated results. The independent-component design divides each Student t draw with three degrees of freedom by `sqrt(3)` before multiplying by the symmetric correlation-matrix square root. All four designs therefore have the same error covariance.
+
+If the original `INMAX_Research_Package_20261108.zip` is available locally, add `--archive path/to/INMAX_Research_Package_20261108.zip` to reuse archived component p-values for the three elliptical designs. This mode also uses pandas 3.0.2, verifies the archive's panel seeds and fitted maxima for those designs, and recomputes all nine procedures for the standardized independent-component design. Both modes use a strict five-percent rejection threshold.
 
 ## Independent implementation in R
 

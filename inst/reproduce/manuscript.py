@@ -108,7 +108,9 @@ def prepare(archive):
     for (T,N,dist,rep), length in df.groupby(keys,sort=False).size().items():
         stop=offset+length
         if design[offset:stop]!=signal_settings(T,N): raise AssertionError('archive design keys')
-        tasks.append((T,N,dist,rep,payload[offset:stop]))
+        # The historical archive predates the unit-variance IC-t3 correction.
+        archived_rows = None if dist == "IC-t3" else payload[offset:stop]
+        tasks.append((T,N,dist,rep,archived_rows))
         offset=stop
     return tasks
 

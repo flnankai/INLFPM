@@ -62,7 +62,7 @@ ac_draw_data <- function(T,N,distribution) {
   distribution <- match.arg(distribution,c("normal","t3","mixture","IC-t3"))
   F <- ac_draw_factors(T)
   if (distribution=="IC-t3") {
-    independent_components <- matrix(rt(T*N,df=3),T,N,byrow=TRUE)
+    independent_components <- matrix(rt(T*N,df=3)/sqrt(3),T,N,byrow=TRUE)
     # The symmetric positive-definite square root is consequential for this
     # nonelliptical model.  A Cholesky root defines a different joint law.
     epsilon <- independent_components%*%t(ac_symmetric_error_root(N))
